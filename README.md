@@ -8,7 +8,7 @@ The `attributes` middleware extends native attributes with dynamic behavior and 
 - processes: element nodes
 - throws on: nothing
 - use as: component or content middleware
-- [docs](http://nx-framework/docs/middlewares/attributes)
+- [docs](http://nx-framework.com/docs/middlewares/attributes)
 
 ## Installation
 
