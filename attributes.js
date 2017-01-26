@@ -88,7 +88,7 @@ function processAttributeWithHandler (handler, name) {
     const expression = compiler.compileExpression(attr.value || name)
     this.$queue(processExpression, expression, name, handler)
   } else {
-    handler.call(this, attr.value, name)
+    this.$queue(handler, attr.value, name)
   }
 }
 
