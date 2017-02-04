@@ -66,8 +66,13 @@ function cacheAttributes (attributes) {
   const cachedAttributes = new Map()
   while (i--) {
     const attribute = attributes[i]
-    const type = attribute.name[0]
-    const name = (type === '$' || type === '@') ? attribute.name.slice(1) : attribute.name
+    let type = attribute.name[0]
+    let name = attribute.name
+    if (type === '$' || type === '@') {
+      name = name.slice(1)
+    } else {
+      type = ''
+    }
     cachedAttributes.set(name, {value: attribute.value, type})
   }
   return cachedAttributes
