@@ -3,7 +3,7 @@
 const compiler = require('@nx-js/compiler-util')
 
 let currAttributes
-const handlers = new Map()
+const configs = new Map()
 const attributeCache = new Map()
 
 function attributes (elem, state, next) {
@@ -14,23 +14,29 @@ function attributes (elem, state, next) {
   elem.$hasAttribute = $hasAttribute
   next()
 
-  currAttributes.forEach(processAttributeWithoutHandler, elem)
-  handlers.forEach(processAttributeWithHandler, elem)
-  handlers.clear()
+  currAttributes.forEach(processAttributeWithoutConfig, elem)
+  configs.forEach(processAttributeWithConfig, elem)
+  configs.clear()
 }
 attributes.$name = 'attributes'
 attributes.$require = ['observe']
 module.exports = attributes
 
-function $attribute (name, handler) {
+function $attribute (name, config) {
   if (typeof name !== 'string') {
-    throw new TypeError('first argument must be a string')
+    throw new TypeError('First argument must be a string')
   }
-  if (typeof handler !== 'function') {
-    throw new TypeError('second argument must be a function')
+  if (typeof config === 'function') {
+    config = { handler: config }
+  }
+  if (typeof config !== 'object') {
+    throw new TypeError('Second argument must be an object or a function')
+  }
+  if (!config.handler) {
+    throw new Error(`${name} attribute must have a handler`)
   }
   if (currAttributes.has(name)) {
-    handlers.set(name, handler)
+    configs.set(name, config)
   }
 }
 
@@ -67,8 +73,8 @@ function cacheAttributes (attributes) {
   return cachedAttributes
 }
 
-function processAttributeWithoutHandler (attr, name) {
-  if (!handlers.has(name)) {
+function processAttributeWithoutConfig (attr, name) {
+  if (!configs.has(name)) {
     if (attr.type === '$') {
       const expression = compiler.compileExpression(attr.value || name)
       this.$queue(processExpression, expression, name, defaultHandler)
@@ -79,16 +85,24 @@ function processAttributeWithoutHandler (attr, name) {
   }
 }
 
-function processAttributeWithHandler (handler, name) {
+function processAttributeWithConfig (config, name) {
   const attr = currAttributes.get(name)
+
+  if (config.type && config.type.indexOf(attr.type) === -1) {
+    throw new Error(`${name} attribute is not allowed to be ${attr.type || 'normal'} type`)
+  }
+  if (config.init) {
+    this.$queue(config.init)
+  }
+
   if (attr.type === '@') {
     const expression = compiler.compileExpression(attr.value || name)
-    this.$observe(processExpression, expression, name, handler)
+    this.$observe(processExpression, expression, name, config.handler)
   } else if (attr.type === '$') {
     const expression = compiler.compileExpression(attr.value || name)
-    this.$queue(processExpression, expression, name, handler)
+    this.$queue(processExpression, expression, name, config.handler)
   } else {
-    this.$queue(handler, attr.value, name)
+    this.$queue(config.handler, attr.value, name)
   }
 }
 
