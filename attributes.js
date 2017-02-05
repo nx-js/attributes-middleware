@@ -11,7 +11,6 @@ function attributes (elem, state, next) {
 
   currAttributes = getAttributes(elem)
   elem.$attribute = $attribute
-  elem.$hasAttribute = $hasAttribute
   next()
 
   currAttributes.forEach(processAttributeWithoutConfig, elem)
@@ -38,13 +37,6 @@ function $attribute (name, config) {
   if (currAttributes.has(name)) {
     configs.set(name, config)
   }
-}
-
-function $hasAttribute (name) {
-  if (typeof name !== 'string') {
-    throw new TypeError('first argument must be a string')
-  }
-  return currAttributes.has(name)
 }
 
 function getAttributes (elem) {
