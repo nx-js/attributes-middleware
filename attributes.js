@@ -74,7 +74,7 @@ function processAttributeWithoutConfig (attr, name) {
   if (!configs.has(name)) {
     if (attr.type === '$') {
       const expression = compiler.compileExpression(attr.value || name)
-      this.$queue(processExpression, expression, name, defaultHandler)
+      processExpression.call(this, expression, name, defaultHandler)
     } else if (attr.type === '@') {
       const expression = compiler.compileExpression(attr.value || name)
       this.$observe(processExpression, expression, name, defaultHandler)
@@ -89,7 +89,7 @@ function processAttributeWithConfig (config, name) {
     throw new Error(`${name} attribute is not allowed to be ${attr.type || 'normal'} type`)
   }
   if (config.init) {
-    this.$queue(config.init)
+    config.init.call(this)
   }
 
   if (attr.type === '@') {
@@ -97,9 +97,9 @@ function processAttributeWithConfig (config, name) {
     this.$observe(processExpression, expression, name, config.handler)
   } else if (attr.type === '$') {
     const expression = compiler.compileExpression(attr.value || name)
-    this.$queue(processExpression, expression, name, config.handler)
+    processExpression.call(this, expression, name, config.handler)
   } else {
-    this.$queue(config.handler, attr.value, name)
+    config.handler.call(this, attr.value, name)
   }
 }
 
