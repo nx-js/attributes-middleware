@@ -19,6 +19,7 @@ function attributes (elem, state, next) {
 }
 attributes.$name = 'attributes'
 attributes.$require = ['observe']
+attributes.$type = ['component', 'content']
 module.exports = attributes
 
 function $attribute (name, config) {

@@ -5,9 +5,8 @@ The `attributes` middleware extends native attributes with dynamic behavior and 
 - name: attributes
 - direct middleware dependencies: [observe](https://github.com/nx-js/observe-middleware)
 - all middleware dependencies: [observe](https://github.com/nx-js/observe-middleware)
-- processes: element nodes
-- throws on: nothing
-- use as: component or content middleware
+- type: component or content middleware
+- ignores: text nodes
 - [docs](http://nx-framework.com/docs/middlewares/attributes)
 
 ## Installation
