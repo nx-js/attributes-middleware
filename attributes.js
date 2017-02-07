@@ -11,7 +11,6 @@ function attributes (elem, state, next) {
 
   currAttributes = getAttributes(elem)
   elem.$attribute = $attribute
-  elem.$props = $props
   next()
 
   currAttributes.forEach(processAttributeWithoutConfig, elem)
@@ -21,12 +20,6 @@ function attributes (elem, state, next) {
 attributes.$name = 'attributes'
 attributes.$require = ['observe']
 module.exports = attributes
-
-function $props (...propNames) {
-  for (let propName of propNames) {
-    this.$attribute(propName, propHandler)
-  }
-}
 
 function $attribute (name, config) {
   if (typeof name !== 'string') {
@@ -121,8 +114,4 @@ function defaultHandler (value, name) {
   } else {
     this.removeAttribute(name)
   }
-}
-
-function propHandler (value, name) {
-  this.$state[name] = value
 }
