@@ -19,27 +19,20 @@ attributes.$require = ['observe']
 module.exports = attributes
 
 function $attribute (name, config) {
+  const attr = currAttributes.get(name)
+  if (!attr) return
+  
   if (currElem !== this) {
     throw new Error(`${name} attribute handler for ${this.tagName} is defined too late.`)
-  }
-  if (typeof name !== 'string') {
-    throw new TypeError('First argument must be a string')
   }
   if (typeof config === 'function') {
     config = { handler: config }
   }
-  if (typeof config !== 'object') {
-    throw new TypeError('Second argument must be an object or a function.')
-  }
   if (!config.handler) {
     throw new Error(`${name} attribute must have a handler`)
   }
-
-  const attr = currAttributes.get(name)
-  if (attr) {
-    processCustomAttribute.call(this, attr, name, config)
-    currAttributes.delete(name)
-  }
+  processCustomAttribute.call(this, attr, name, config)
+  currAttributes.delete(name)
 }
 
 function initAttributes (elem) {
