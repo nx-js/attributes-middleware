@@ -2,26 +2,26 @@
 
 const compiler = require('@nx-js/compiler-util')
 
-let currAttributes
-const configs = new Map()
+let currElem
+let currAttributes = new Map()
 const attributeCache = new Map()
 
 function attributes (elem, state, next) {
   if (elem.nodeType !== 1) return
 
-  currAttributes = getAttributes(elem)
   elem.$attribute = $attribute
+  initAttributes(elem)
   next()
-
-  currAttributes.forEach(processAttributeWithoutConfig, elem)
-  configs.forEach(processAttributeWithConfig, elem)
-  configs.clear()
+  processAttributes(elem)
 }
 attributes.$name = 'attributes'
 attributes.$require = ['observe']
 module.exports = attributes
 
 function $attribute (name, config) {
+  if (currElem !== this) {
+    throw new Error(`${name} attribute handler for ${this.tagName} is defined too late.`)
+  }
   if (typeof name !== 'string') {
     throw new TypeError('First argument must be a string')
   }
@@ -29,33 +29,37 @@ function $attribute (name, config) {
     config = { handler: config }
   }
   if (typeof config !== 'object') {
-    throw new TypeError('Second argument must be an object or a function')
+    throw new TypeError('Second argument must be an object or a function.')
   }
   if (!config.handler) {
     throw new Error(`${name} attribute must have a handler`)
   }
-  if (currAttributes.has(name)) {
-    configs.set(name, config)
+
+  const attr = currAttributes.get(name)
+  if (attr) {
+    processCustomAttribute.call(this, attr, name, config)
+    currAttributes.delete(name)
   }
 }
 
-function getAttributes (elem) {
+function initAttributes (elem) {
+  currElem = elem
   const cloneId = elem.getAttribute('clone-id')
-  let attributes
   if (cloneId) {
-    attributes = attributeCache.get(cloneId)
-    if (!attributes) {
-      attributes = cacheAttributes(elem.attributes)
-      attributeCache.set(cloneId, attributes)
+    const attributes = attributeCache.get(cloneId)
+    if (attributes) {
+      currAttributes = new Map(attributes)
+    } else {
+      extractAttributes(elem)
+      attributeCache.set(cloneId, new Map(currAttributes))
     }
-    return attributes
   }
-  return cacheAttributes(elem.attributes)
+  extractAttributes(elem)
 }
 
-function cacheAttributes (attributes) {
+function extractAttributes (elem) {
+  const attributes = elem.attributes
   let i = attributes.length
-  const cachedAttributes = new Map()
   while (i--) {
     const attribute = attributes[i]
     let type = attribute.name[0]
@@ -65,26 +69,27 @@ function cacheAttributes (attributes) {
     } else {
       type = ''
     }
-    cachedAttributes.set(name, {value: attribute.value, type})
-  }
-  return cachedAttributes
-}
-
-function processAttributeWithoutConfig (attr, name) {
-  if (!configs.has(name)) {
-    if (attr.type === '$') {
-      const expression = compiler.compileExpression(attr.value || name)
-      processExpression.call(this, expression, name, defaultHandler)
-    } else if (attr.type === '@') {
-      const expression = compiler.compileExpression(attr.value || name)
-      this.$observe(processExpression, expression, name, defaultHandler)
-    }
+    currAttributes.set(name, {value: attribute.value, type})
   }
 }
 
-function processAttributeWithConfig (config, name) {
-  const attr = currAttributes.get(name)
+function processAttributes (elem) {
+  currAttributes.forEach(processAttribute, elem)
+  currAttributes.clear()
+  currElem = undefined
+}
 
+function processAttribute (attr, name) {
+  if (attr.type === '$') {
+    const expression = compiler.compileExpression(attr.value || name)
+    processExpression.call(this, expression, name, defaultHandler)
+  } else if (attr.type === '@') {
+    const expression = compiler.compileExpression(attr.value || name)
+    this.$observe(processExpression, expression, name, defaultHandler)
+  }
+}
+
+function processCustomAttribute (attr, name, config) {
   if (config.type && config.type.indexOf(attr.type) === -1) {
     throw new Error(`${name} attribute is not allowed to be ${attr.type || 'normal'} type`)
   }
